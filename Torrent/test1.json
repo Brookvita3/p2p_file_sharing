@@ -1,12 +1,12 @@
 {
     "trackerIp": "192.168.244.43",
-    "magnetText": "6115c3d42d3b9207b780058885195f4dad72d67ae02813bdac4c3f3fc6faa2de",
+    "magnetText": "28aef172edf1f891b82a264f5a6cdf6fd7e73b0cbe22543dd58fcd7dd7bcc82c",
     "metaInfo": {
         "name": "test1.txt",
-        "filesize": 20,
-        "piece_size": 1024,
+        "filesize": 48,
+        "piece_size": 4000,
         "pieces": [
-            "25d5a59a3c55095f3a39f4f258dc9469db9ab39fe9567fc2401a15e8ad231d7c"
+            "9ec388dbef5e7b063dbd95aa464b7f2020a5fbbe5e82f7713161bddef4d5be2a"
         ]
     }
 }

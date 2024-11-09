@@ -3,7 +3,6 @@ import hashlib
 import os
 from dotenv import load_dotenv
 import json
-import bencodepy
 import ast
 
 load_dotenv()
@@ -25,7 +24,7 @@ def get_host_default():
     return ip
 
 
-def make_attribute_torrent(filename, piece_size=pieceSize):  # .txt
+def make_attribute_torrent(filename, piece_size=20):  # .txt
     path = os.path.dirname(__file__)
     fullpath = os.path.join(path, "MyFolder", filename)
 
@@ -99,14 +98,14 @@ def get_hashcode(fullpath, file_name):
         print(f"Lỗi khi đọc tệp {file_name}: {e}")
 
 
-def create_torrent_file(filename, data_torrent):
+def create_torrent_file(file_name, data_torrent):
     """Tạo một tệp .json mới từ dữ liệu JSON."""
     path = os.path.dirname(__file__)
-    filename = filename.split(".")[0] + ".json"
-    fullpath = os.path.join(path, "Torrent", filename)
+    file_name = file_name.split(".")[0] + ".json"
+    fullpath = os.path.join(path, "Torrent", file_name)
     with open(fullpath, "w") as json_file:
         json.dump(data_torrent, json_file, indent=4)
-    print(f"File {filename} create successfully .")
+    print(f"Tệp {file_name} đã được tạo thành công.")
 
 
 def create_temp_file(data: bytes, piece_index, torrent):
@@ -189,20 +188,25 @@ def contruct_piece_to_peers(data: list):
     peers = []
     for entry in data:
         # Split into piece availability and peer info
-        piece_availability, peer_info = entry.split("] [")
-        piece_availability = ast.literal_eval(piece_availability + "]")
-        peer_info = ast.literal_eval("[" + peer_info)
+        piece_availability, peer_info = entry.split("] {")
+        piece_availability = piece_availability + "]"
+        peer_info = "{" + peer_info
+
+        piece_availability = ast.literal_eval(piece_availability)
+        peer_info = ast.literal_eval(peer_info)
         peers.append((piece_availability, peer_info))
 
+    print(peers)
+    # [([True, True], {'peerIp': '192.168.244.43', 'peerPort': 1000})]
+
     # Create a dictionary of pieces to the peers who have them
-    piece_to_peers = {
-        i: [
-            peer_info  # Store the actual peer IP and port tuple
-            for availability_list, peer_info in peers
-            if availability_list[i]  # Only include peer if they have the piece
-        ]
-        for i in range(
-            len(peers[0][0])
-        )  # Iterate through the number of pieces (based on the first peer's list)
-    }
+    piece_count = len(peers[0][0])
+    piece_to_peers = {}
+    for i in range(piece_count):
+        piece_to_peers[i] = []
+        for availability_list, peer_info in peers:
+            if availability_list[i]:
+                data = [peer_info["peerIp"], str(peer_info["peerPort"])]
+                piece_to_peers[i].append(data)
+
     return piece_to_peers

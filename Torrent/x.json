@@ -1,0 +1,13 @@
+{
+    "trackerIp": "192.168.244.43",
+    "magnetText": "550b850585ebcf038ce048b18334451fa4d467a2e02031438672c9d87bb3bb54",
+    "metaInfo": {
+        "name": "x.tdabsdha",
+        "filesize": 27,
+        "piece_size": 20,
+        "pieces": [
+            "9a96bdd1e8eb362ed9ae4234535cb7d21dd47899ba526afbf53e188cf74046c1",
+            "f6ae03fcf15463db7bce62e89394e3b63b414e0061d5f15fcc179d84c2b01c1e"
+        ]
+    }
+}
