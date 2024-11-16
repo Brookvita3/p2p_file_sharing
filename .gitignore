@@ -4,3 +4,8 @@ server
 __pycache__
 Temp
 TRACKER/node_modules
+Torrent
+MyFolder/
+test_socket.py
+Download
+doc.txt

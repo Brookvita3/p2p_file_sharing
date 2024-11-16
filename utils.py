@@ -24,7 +24,7 @@ def get_host_default():
     return ip
 
 
-def make_attribute_torrent(filename, piece_size=20):  # .txt
+def make_attribute_torrent(filename, piece_size=pieceSize):  # .txt
     path = os.path.dirname(__file__)
     fullpath = os.path.join(path, "MyFolder", filename)
 
@@ -48,7 +48,7 @@ def make_attribute_torrent(filename, piece_size=20):  # .txt
     return hashinfo.hexdigest(), piece_hashes, size, piece_size
 
 
-def generate_Torrent(filename):
+def generate_Torrent(filename, description: str):
     try:
         magnet_text, pieces, size, piece_size = make_attribute_torrent(filename)  # .txt
     except Exception:
@@ -56,6 +56,7 @@ def generate_Torrent(filename):
     data = {
         "trackerIp": trackerIP,
         "magnetText": magnet_text,
+        "description": description,
         "metaInfo": {
             "name": filename,
             "filesize": size,
@@ -210,3 +211,17 @@ def contruct_piece_to_peers(data: list):
                 piece_to_peers[i].append(data)
 
     return piece_to_peers
+
+
+def clear_temp_files():
+    path = os.path.dirname(__file__)
+    folder_path = os.path.join(path, "Temp")
+    try:
+        # Get list of all files in the folder
+        for filename in os.listdir(folder_path):
+            file_path = os.path.join(folder_path, filename)
+            if os.path.isfile(file_path):  # Ensure it's a file, not a subfolder
+                os.remove(file_path)
+        print("All files deleted.")
+    except Exception as e:
+        print(f"An error occurred when delete file in Temp folder: {e}")

@@ -2,6 +2,7 @@ import socket
 from utils import *
 import json
 import ast
+from pathlib import Path
 
 data = {
     "trackerIp": "192.168.244.43",
@@ -128,4 +129,6 @@ def contruct_piece_to_peers(data: list):
     return piece_to_peers
 
 
-print(contruct_piece_to_peers(data))
+folder = Path("Temp")
+files = [file for file in folder.iterdir() if file.is_file()]
+print(len(files))

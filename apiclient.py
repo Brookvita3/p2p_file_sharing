@@ -24,6 +24,7 @@ class ClientSite:
         print("-" * 40)
         for file in Files:
             print(f"{file['filename']:<20} {file['magnetText']}")
+        return Files
 
     def download(self, hashcode):
         """download with hashcode"""
