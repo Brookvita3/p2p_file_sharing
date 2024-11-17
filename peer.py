@@ -452,9 +452,10 @@ class Peer:
         response = requests.post(url, json=param)
         print(response.json())
 
-    def upload_api(self, filename):
+    def upload_api(self, filename, description: str):
         try:
-            description = input("Enter description: ")
+            # this is for cli
+            # description = input("Enter description: ")
             data = generate_Torrent(filename, description)
             if data is None:
                 return

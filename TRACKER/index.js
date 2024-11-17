@@ -2,6 +2,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const connectDB = require("./config/config");
 const trackerRoutes = require("./routes/APIendpoint");
+const { getLocalIp } = require("./utils/utils");
 
 // Kết nối MongoDB
 connectDB();
@@ -15,5 +16,6 @@ app.use("/tracker", trackerRoutes);
 
 const PORT = 3000;
 app.listen(PORT, () => {
-  console.log(`Tracker server running on http://localhost:${PORT}`);
+  host = getLocalIp();
+  console.log(`Tracker server running on ${host}:${PORT}`);
 });

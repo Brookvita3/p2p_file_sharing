@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import messagebox, filedialog, ttk
+from tkinter import messagebox, filedialog, ttk, simpledialog
 import os
 import platform
 from apiclient import ClientSite
@@ -7,6 +7,7 @@ from peer import Peer
 from utils import get_host_default
 import time
 import threading
+import shutil
 
 host = get_host_default()
 port = 1000
@@ -143,9 +144,25 @@ class App(tk.Tk):
             filetypes=[("Text Files", "*.txt"), ("All Files", "*.*")],
         )
         if file_path:
-            messagebox.showinfo("Tệp được chọn", f"Tệp đã chọn: {file_path}")
+            try:
+                description = simpledialog.askstring(
+                    "Information", "Please enter descrpition of file:"
+                )
+
+                if description is None:
+                    messagebox.showwarning("No description", "Upload canceled.")
+                else:
+                    file_name = os.path.basename(file_path)
+                    copied_file_path = os.path.join("MyFolder", file_name)
+                    shutil.copy(file_path, copied_file_path)
+                    print(f"description: {description}")
+                    self.client.upload(file_name, description)
+                    messagebox.showinfo("Upload Complete", f"Uploaded: {file_name}")
+
+            except Exception as e:
+                messagebox.showerror("Error", f"Have error: {e}")
         else:
-            messagebox.showwarning("Chưa chọn tệp", "Vui lòng chọn một tệp để upload!")
+            messagebox.showwarning("No File Selected", "Please try again.")
 
     def download_file(self, hashcode):
         # Hàm xử lý khi nhấn nút Download của từng tệp

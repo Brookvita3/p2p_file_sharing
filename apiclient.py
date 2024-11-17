@@ -31,10 +31,10 @@ class ClientSite:
         self.peer.download(hashcode)
         # self.peer.de
 
-    def upload(self, filename):
+    def upload(self, filename, description: str):
         """upload torrent"""
         # self.peer.upload_Torrent(filename)
-        self.peer.upload_api(filename)
+        self.peer.upload_api(filename, description)
 
     def exit(self, host, port):
         """exit app"""
