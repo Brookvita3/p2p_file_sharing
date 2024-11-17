@@ -10,6 +10,9 @@ import time
 import requests
 from pathlib import Path
 
+load_dotenv()
+TrackerURL = os.getenv("TRACKERURL")
+
 
 class Peer:
 
@@ -416,7 +419,8 @@ class Peer:
     # -----------TRACKER INTERACTION WITH API HTTP-------------#
 
     def start_api(self):
-        url = "http://localhost:3000/tracker/start"
+        # url = "http://localhost:3000/tracker/start"
+        url = TrackerURL + "/tracker/start"
         lists = get_magnetTexts_from_torrent()
         self.magnet_text_list = lists
         print(type(lists))
@@ -435,13 +439,15 @@ class Peer:
         listen_thread.start()
 
     def get_all_file_api(self):
-        url = "http://localhost:3000/tracker/getAllTorrents"
+        # url = "http://localhost:3000/tracker/getAllTorrents"
+        url = TrackerURL + "/tracker/getAllTorrents"
         response = requests.get(url)
         return response.json()
 
     def exit_api(self):
         self.running = False
-        url = "http://localhost:3000/tracker/exit"
+        # url = "http://localhost:3000/tracker/exit"
+        url = TrackerURL + "/tracker/exit"
         param = {"peerIp": self.peer_host, "peerPort": self.peer_port}
         response = requests.post(url, json=param)
         print(response.json())
@@ -453,26 +459,27 @@ class Peer:
             if data is None:
                 return
 
-            url = "http://localhost:3000/tracker/upload"
+            # url = "http://localhost:3000/tracker/upload"
+            url = TrackerURL + "/tracker/upload"
 
             data = json.loads(data)
-            # param = {
-            #     "peerIp": self.peer_host,
-            #     "peerPort": self.peer_port,
-            #     "Torrent": data,
-            # }
-
             param = {
                 "peerIp": self.peer_host,
                 "peerPort": self.peer_port,
+                "Torrent": data,
             }
 
+            # param = {
+            #     "peerIp": self.peer_host,
+            #     "peerPort": self.peer_port,
+            # }
+
             response = requests.post(url, json=param)
-            port = response.json()["port"]
-            tracker_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            tracker_socket.connect((trackerIP, int(port)))
-            tracker_socket.sendall(json.dumps(data).encode())
-            tracker_socket.close()
+            # port = response.json()["port"]
+            # tracker_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            # tracker_socket.connect((trackerIP, int(port)))
+            # tracker_socket.sendall(json.dumps(data).encode())
+            # tracker_socket.close()
 
             if response.status_code != 409:
                 create_torrent_file(filename, data)
@@ -486,7 +493,8 @@ class Peer:
             print("something wrong when upload file: {}".format(e))
 
     def download_torrent_from_tracker_api(self, magnetText):
-        url = "http://localhost:3000/tracker/download"
+        # url = "http://localhost:3000/tracker/download"
+        url = TrackerURL + "/tracker/download"
         param = {
             "peerIp": self.peer_host,
             "peerPort": self.peer_port,
@@ -495,23 +503,24 @@ class Peer:
         response = requests.get(url, json=param)
 
         # recieve torrent  by socket
-        tracker_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        tracker_socket.bind((self.peer_host, 5000))
-        tracker_socket.listen()
-        connect, tracker_addr = tracker_socket.accept()
-        chunks = []
-        while True:
-            chunk = connect.recv(1024)  # Receive 1024 bytes at a time
-            if not chunk:
-                break  # Exit the loop if no more data is received
-            chunks.append(chunk)
-        full_data = b"".join(chunks)
-        json_data = full_data.decode("utf-8")
-        data = json.loads(json_data)
-        print(type(data))
-        tracker_socket.close()
+        # tracker_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # tracker_socket.bind((self.peer_host, 5000))
+        # tracker_socket.listen()
+        # connect, tracker_addr = tracker_socket.accept()
+        # chunks = []
+        # while True:
+        #     chunk = connect.recv(1024)  # Receive 1024 bytes at a time
+        #     if not chunk:
+        #         break  # Exit the loop if no more data is received
+        #     chunks.append(chunk)
+        # full_data = b"".join(chunks)
+        # json_data = full_data.decode("utf-8")
+        # data = json.loads(json_data)
+        # print(type(data))
+        # tracker_socket.close()
+        # data_torent = data
 
-        data_torent = data
+        data_torent = response.json()["torrent"]
         peerlist = response.json()["listPeer"]
 
         return data_torent, peerlist

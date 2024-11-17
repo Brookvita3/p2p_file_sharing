@@ -86,66 +86,85 @@ router.post("/start", async (req, res) => {
 // Lưu nội dung của Torrent vào database và cập nhật ListPeer của torrent mới
 router.post("/upload", async (req, res) => {
   // Start a temporary socket server
-  const { peerIp, peerPort } = req.body;
-  const server = net.createServer(async (socket) => {
-    console.log("Client connected via socket.");
-
-    try {
-      const torrentData = await handleSocketData(socket);
-
-      console.log("Received torrent data:");
-
-      const { magnetText } = torrentData;
-
-      // Save torrent to database
-      let torrent = await Torrent.findOne({ magnetText });
-      if (!torrent) {
-        const newTorrent = new Torrent(torrentData);
-        await newTorrent.save();
-        console.log("Torrent saved to database.");
-      }
-
-      // Update peer list
-      let listPeerOfTorrent = await ListPeer.findOne({ magnetText });
-      if (!listPeerOfTorrent) {
-        listPeerOfTorrent = new ListPeer({
-          magnetText,
-          list_peer: [{ peerIp, peerPort }],
-        });
-      } else {
-        listPeerOfTorrent.list_peer.push({ peerIp, peerPort });
-      }
-      await listPeerOfTorrent.save();
-      console.log("Peer list updated:", { peerIp, peerPort });
-
-      socket.write(
-        JSON.stringify({ message: "Torrent uploaded successfully." })
-      );
-    } catch (error) {
-      console.error("Error processing socket data:", error);
-      socket.write(JSON.stringify({ error: error.message }));
-    } finally {
-      socket.end();
-      server.close(() => {
-        console.log("Socket server closed.");
-      });
+  // const { peerIp, peerPort } = req.body;
+  // const server = net.createServer(async (socket) => {
+  //   console.log("Client connected via socket.");
+  //   try {
+  //     const torrentData = await handleSocketData(socket);
+  //     console.log("Received torrent data:");
+  //     const { magnetText } = torrentData;
+  //     // Save torrent to database
+  //     let torrent = await Torrent.findOne({ magnetText });
+  //     if (!torrent) {
+  //       const newTorrent = new Torrent(torrentData);
+  //       await newTorrent.save();
+  //       console.log("Torrent saved to database.");
+  //     }
+  //     // Update peer list
+  //     let listPeerOfTorrent = await ListPeer.findOne({ magnetText });
+  //     if (!listPeerOfTorrent) {
+  //       listPeerOfTorrent = new ListPeer({
+  //         magnetText,
+  //         list_peer: [{ peerIp, peerPort }],
+  //       });
+  //     } else {
+  //       listPeerOfTorrent.list_peer.push({ peerIp, peerPort });
+  //     }
+  //     await listPeerOfTorrent.save();
+  //     console.log("Peer list updated:", { peerIp, peerPort });
+  //     socket.write(
+  //       JSON.stringify({ message: "Torrent uploaded successfully." })
+  //     );
+  //   } catch (error) {
+  //     console.error("Error processing socket data:", error);
+  //     socket.write(JSON.stringify({ error: error.message }));
+  //   } finally {
+  //     socket.end();
+  //     server.close(() => {
+  //       console.log("Socket server closed.");
+  //     });
+  //   }
+  // });
+  // // Listen on a dynamic port
+  // server.listen(0, () => {
+  //   const address = server.address();
+  //   const port = address.port;
+  //   console.log(`Temporary socket server listening on port ${address.port}`);
+  //   res
+  //     .status(200)
+  //     .json({ message: "Socket server ready.", port: address.port });
+  // });
+  // server.on("error", (err) => {
+  //   console.error("Socket server error:", err);
+  //   res.status(500).json({ error: "Failed to start socket server." });
+  // });
+  const { peerIp, peerPort, Torrent: torrentData } = req.body;
+  try {
+    const { magnetText } = torrentData;
+    let torrent = await Torrent.findOne({ magnetText });
+    if (!torrent) {
+      const newTorrent = new Torrent(torrentData);
+      await newTorrent.save();
+    } else {
+      return res.status(409).json({ error: "already have on server" });
     }
-  });
 
-  // Listen on a dynamic port
-  server.listen(0, () => {
-    const address = server.address();
-    const port = address.port;
-    console.log(`Temporary socket server listening on port ${address.port}`);
-    res
-      .status(200)
-      .json({ message: "Socket server ready.", port: address.port });
-  });
+    let listPeerOfTorrent = await ListPeer.findOne({ magnetText });
 
-  server.on("error", (err) => {
-    console.error("Socket server error:", err);
-    res.status(500).json({ error: "Failed to start socket server." });
-  });
+    if (!listPeerOfTorrent) {
+      listPeerOfTorrent = new ListPeer({
+        magnetText,
+        list_peer: [{ peerIp: peerIp, peerPort: peerPort }],
+      });
+    } else {
+      listPeerOfTorrent.list_peer.push({ peerIp, peerPort });
+    }
+    await listPeerOfTorrent.save();
+
+    res.status(200).json({ message: "Torrent uploaded successfully." });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // Endpoint receive DOWNLOAD message
@@ -184,45 +203,44 @@ router.get("/download", async (req, res) => {
         await listPeer.save(); // Lưu thay đổi vào database
       }
 
-      const socket = new net.Socket();
-      socket.connect(5000, peerIp, () => {
-        console.log("Connected to peer at ", peerIp, peerPort);
+      // const socket = new net.Socket();
+      // socket.connect(5000, peerIp, () => {
+      //   console.log("Connected to peer at ", peerIp, peerPort);
 
-        // Send the torrent and list of peers as JSON
-        const dataToSend = torrent;
+      //   // Send the torrent and list of peers as JSON
+      //   const dataToSend = torrent;
 
-        const jsonString = JSON.stringify(dataToSend);
-        const chunks = splitIntoChunks(jsonString, 1024);
+      //   const jsonString = JSON.stringify(dataToSend);
+      //   const chunks = splitIntoChunks(jsonString, 1024);
 
-        // Function to send all chunks
-        let chunkCount = 0;
-        function sendChunk() {
-          if (chunkCount < chunks.length) {
-            console.log(`Sending chunk ${chunkCount + 1}:`, chunks[chunkCount]);
-            socket.write(chunks[chunkCount]);
-            chunkCount++;
+      //   // Function to send all chunks
+      //   let chunkCount = 0;
+      //   function sendChunk() {
+      //     if (chunkCount < chunks.length) {
+      //       console.log(`Sending chunk ${chunkCount + 1}:`, chunks[chunkCount]);
+      //       socket.write(chunks[chunkCount]);
+      //       chunkCount++;
 
-            // Wait before sending the next chunk (50ms delay)
-            setTimeout(sendChunk, 50); // You can adjust the delay as needed
-          } else {
-            // Close the socket after sending all chunks
-            socket.end();
-            console.log("All chunks sent, connection closed.");
-          }
-        }
+      //       // Wait before sending the next chunk (50ms delay)
+      //       setTimeout(sendChunk, 50); // You can adjust the delay as needed
+      //     } else {
+      //       // Close the socket after sending all chunks
+      //       socket.end();
+      //       console.log("All chunks sent, connection closed.");
+      //     }
+      //   }
 
-        // Start sending the chunks
-        sendChunk();
-      });
+      //   // Start sending the chunks
+      //   sendChunk();
+      // });
 
-      // Handle errors and close the connection if there are issues
-      socket.on("error", (err) => {
-        console.error("Socket error:", err);
-        socket.end();
-      });
+      // // Handle errors and close the connection if there are issues
+      // socket.on("error", (err) => {
+      //   console.error("Socket error:", err);
+      //   socket.end();
+      // });
 
-      //   const ip = await getLocalIp();
-      console.log("Download from peer: ", peerIp, peerPort);
+      // console.log("Download from peer: ", peerIp, peerPort);
 
       // Trả về torrent và listPeer không bao gồm peer hiện tại
       res.status(200).json({
