@@ -25,6 +25,6 @@ Project này triển khai hệ thống chia sẻ tệp Peer-to-Peer (P2P) cho ph
    ```
 4. Khởi chạy peer:
 
-```bash
-python peer.py
-```
+   ```bash
+   python peer.py
+   ```
